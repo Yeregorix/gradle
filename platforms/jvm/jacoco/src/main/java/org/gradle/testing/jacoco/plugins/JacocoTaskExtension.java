@@ -36,6 +36,7 @@ import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
+import org.gradle.internal.deprecation.DeprecationLogger;
 import org.gradle.internal.instrumentation.api.annotations.ToBeReplacedByLazyProperty;
 import org.gradle.internal.jacoco.JacocoAgentJar;
 import org.gradle.process.JavaForkOptions;
@@ -124,7 +125,7 @@ public abstract class JacocoTaskExtension {
     /**
      * Whether offline instrumentation will be used. Defaults to {@code false}.
      *
-     * @since 8.1
+     * @since 8.2
      */
     @Incubating
     @Input
@@ -135,7 +136,7 @@ public abstract class JacocoTaskExtension {
     /**
      * The collection of offline instrumented classes that will be added to the test runtime classpath.
      *
-     * @since 8.1
+     * @since 8.2
      */
     @Incubating
     @IgnoreEmptyDirectories
@@ -361,14 +362,23 @@ public abstract class JacocoTaskExtension {
     @Deprecated
     @Internal
     public String getAsJvmArg() {
+        DeprecationLogger.deprecateMethod(JacocoTaskExtension.class, "getAsJvmArg()")
+            .replaceWith("asJvmArgs()")
+            .willBeRemovedInGradle9()
+            .withUpgradeGuideSection(8, "get_as_jvm_arg_deprecated")
+            .nagUser();
+
         return getJavaAgentArg();
     }
 
     /**
-     * Gets all agent properties as JVM arguments.
+     * Gets all Jacoco options as JVM arguments.
+     * These arguments are used to configure Jacoco at runtime.
+     * When offline instrumentation is disabled, a single argument contains the path of the agent and all its options.
+     * When offline instrumentation is enabled, each Jacoco option is passed in its own JVM property.
      *
      * @return state of extension as JVM arguments
-     * @since 8.1
+     * @since 8.2
      */
     @Incubating
     public List<String> asJvmArgs() {
@@ -430,7 +440,7 @@ public abstract class JacocoTaskExtension {
                 return;
             }
 
-            final @Nullable String formatted;
+            final String formatted;
             if (value instanceof Collection) {
                 formatted = ((Collection<?>) value).isEmpty() ? null : Joiner.on(':').join((Collection<?>) value);
             } else if (value instanceof File) {
