@@ -75,7 +75,7 @@ public abstract class JacocoPlugin implements Plugin<Project> {
     /**
      * The default directory where offline instrumented classes are generated.
      *
-     * @since 8.2
+     * @since 8.14.3
      */
     @Incubating
     public static final String DEFAULT_OFFLINE_INSTRUMENTED_CLASSES_DIR = "jacoco/instrumented-classes/";

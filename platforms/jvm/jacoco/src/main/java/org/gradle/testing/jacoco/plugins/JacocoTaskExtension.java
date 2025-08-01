@@ -125,7 +125,7 @@ public abstract class JacocoTaskExtension {
     /**
      * Whether offline instrumentation will be used. Defaults to {@code false}.
      *
-     * @since 8.2
+     * @since 8.14.3
      */
     @Incubating
     @Input
@@ -136,7 +136,7 @@ public abstract class JacocoTaskExtension {
     /**
      * The collection of offline instrumented classes that will be added to the test runtime classpath.
      *
-     * @since 8.2
+     * @since 8.14.3
      */
     @Incubating
     @IgnoreEmptyDirectories
@@ -378,7 +378,7 @@ public abstract class JacocoTaskExtension {
      * When offline instrumentation is enabled, each Jacoco option is passed in its own JVM property.
      *
      * @return state of extension as JVM arguments
-     * @since 8.2
+     * @since 8.14.3
      */
     @Incubating
     public List<String> asJvmArgs() {

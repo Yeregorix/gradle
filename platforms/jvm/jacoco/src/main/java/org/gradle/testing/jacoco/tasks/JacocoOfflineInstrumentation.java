@@ -38,14 +38,23 @@ import java.io.File;
 /**
  * Task for applying Jacoco offline instrumentation to a collection of classes.
  *
- * @since 8.2
+ * @since 8.14.3
  */
 @Incubating
 @CacheableTask
 public abstract class JacocoOfflineInstrumentation extends JacocoBase {
 
     /**
+     * Creates a task for applying Jacoco offline instrumentation.
+     *
+     * @since 8.14.3
+     */
+    public JacocoOfflineInstrumentation() {}
+
+    /**
      * The directories containing the classes that will be instrumented.
+     *
+     * @since 8.14.3
      */
     @IgnoreEmptyDirectories
     @PathSensitive(PathSensitivity.RELATIVE)
@@ -56,6 +65,7 @@ public abstract class JacocoOfflineInstrumentation extends JacocoBase {
      * Adds a source set to the list to be instrumented. The output of this source set will be used as classes to be instrumented.
      *
      * @param sourceSets one or more source sets to instrument
+     * @since 8.14.3
      */
     public void sourceSets(final SourceSet... sourceSets) {
         for (final SourceSet sourceSet : sourceSets) {
@@ -65,6 +75,8 @@ public abstract class JacocoOfflineInstrumentation extends JacocoBase {
 
     /**
      * The directory where instrumented classes will be generated.
+     *
+     * @since 8.14.3
      */
     @OutputDirectory
     public abstract DirectoryProperty getOutputDir();
@@ -75,6 +87,11 @@ public abstract class JacocoOfflineInstrumentation extends JacocoBase {
     @Inject
     protected abstract FileOperations getFileOperations();
 
+    /**
+     * Generates the instrumented classes.
+     *
+     * @since 8.14.3
+     */
     @TaskAction
     public void generate() {
         Directory outputDir = getOutputDir().get();
