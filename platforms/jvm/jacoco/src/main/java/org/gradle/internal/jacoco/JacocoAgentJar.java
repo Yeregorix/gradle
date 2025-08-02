@@ -15,18 +15,15 @@
  */
 package org.gradle.internal.jacoco;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.file.FileOperations;
-import org.gradle.api.specs.Spec;
 import org.gradle.util.internal.VersionNumber;
 
 import java.io.File;
 import javax.inject.Inject;
 
 /**
- * Helper to resolve the {@code jacocoagent.jar} from inside of the {@code org.jacoco.agent.jar}.
+ * Helper to resolve the runtime agent jar.
  */
 public class JacocoAgentJar {
 
@@ -35,7 +32,7 @@ public class JacocoAgentJar {
 
     private final FileOperations fileOperations;
     private FileCollection agentConf;
-    private File agentJar;
+    private File runtimeJar;
 
     /**
      * Constructs a new agent JAR wrapper.
@@ -57,46 +54,34 @@ public class JacocoAgentJar {
     }
 
     /**
-     * Unzips the resolved {@code org.jacoco.agent.jar} to retrieve the {@code jacocoagent.jar}.
-     *
-     * @return a file pointing to the {@code jacocoagent.jar}
+     * @return a file pointing to the runtime agent jar.
      */
     public File getJar() {
-        if (agentJar == null) {
-            agentJar = fileOperations.zipTree(getAgentConf().getSingleFile()).filter(new Spec<File>() {
-                @Override
-                public boolean isSatisfiedBy(File file) {
-                    return file.getName().equals("jacocoagent.jar");
-                }
-            }).getSingleFile();
+        if (runtimeJar == null) {
+            File candidate = getAgentConf().getSingleFile();
+            if (candidate.getName().endsWith("-runtime.jar")) {
+                runtimeJar = candidate;
+            } else {
+                // Legacy, unzips the resolved jar to retrieve the runtime jar.
+                runtimeJar = fileOperations.zipTree(candidate).filter(file -> file.getName().equals("jacocoagent.jar")).getSingleFile();
+            }
         }
-        return agentJar;
+        return runtimeJar;
     }
 
     public boolean supportsJmx() {
-        boolean pre062 = Iterables.any(getAgentConf(), new Predicate<File>() {
-            @Override
-            public boolean apply(File file) {
-                return V_0_6_2_0.compareTo(extractVersion(file.getName())) > 0;
-            }
-        });
-        return !pre062;
+        return V_0_6_2_0.compareTo(extractVersion()) <= 0;
     }
 
     public boolean supportsInclNoLocationClasses() {
-        boolean pre076 = Iterables.any(getAgentConf(), new Predicate<File>() {
-            @Override
-            public boolean apply(File file) {
-                return V_0_7_6_0.compareTo(extractVersion(file.getName())) > 0;
-            }
-        });
-        return !pre076;
+        return V_0_7_6_0.compareTo(extractVersion()) <= 0;
     }
 
-    public static VersionNumber extractVersion(String jarName) {
-        // jarName format: org.jacoco.agent-<version>.jar
+    private VersionNumber extractVersion() {
+        // format: org.jacoco.agent-<version>(-runtime).jar
+        String jarName = getAgentConf().getSingleFile().getName();
         int versionStart = "org.jacoco.agent-".length();
-        int versionEnd = jarName.length() - ".jar".length();
+        int versionEnd = jarName.length() - (jarName.endsWith("-runtime.jar") ? 12 : 4);
         return VersionNumber.parse(jarName.substring(versionStart, versionEnd));
     }
 }

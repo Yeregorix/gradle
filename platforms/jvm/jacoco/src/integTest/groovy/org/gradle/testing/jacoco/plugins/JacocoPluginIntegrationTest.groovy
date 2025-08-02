@@ -88,21 +88,43 @@ class JacocoPluginIntegrationTest extends AbstractIntegrationSpec implements Ins
         output.contains "org.jacoco:org.jacoco.ant:"
     }
 
-    def "allows configuring tool dependencies explicitly"() {
+    def "allows configuring agent dependency explicitly"() {
         when:
         buildFile << """
             dependencies {
-                //downgrade version:
-                jacocoAgent "org.jacoco:org.jacoco.agent:0.6.0.201210061924"
-                jacocoAnt "org.jacoco:org.jacoco.ant:0.6.0.201210061924"
+                // downgrade version:
+                jacocoAgent "org.jacoco:org.jacoco.agent:0.6.0.201210061924:runtime"
             }
         """
 
         succeeds("dependencies", "--configuration", "jacocoAgent")
         then:
         output.contains "org.jacoco:org.jacoco.agent:0.6.0.201210061924"
+    }
 
+    def "allows configuring agent dependency explicitly (legacy)"() {
         when:
+        buildFile << """
+            dependencies {
+                // downgrade version:
+                jacocoAgent "org.jacoco:org.jacoco.agent:0.6.0.201210061924"
+            }
+        """
+
+        succeeds("dependencies", "--configuration", "jacocoAgent")
+        then:
+        output.contains "org.jacoco:org.jacoco.agent:0.6.0.201210061924"
+    }
+
+    def "allows configuring ant dependency explicitly"() {
+        when:
+        buildFile << """
+            dependencies {
+                // downgrade version:
+                jacocoAnt "org.jacoco:org.jacoco.ant:0.6.0.201210061924"
+            }
+        """
+
         succeeds("dependencies", "--configuration", "jacocoAnt")
         then:
         output.contains "org.jacoco:org.jacoco.ant:0.6.0.201210061924"

@@ -183,7 +183,7 @@ public abstract class JacocoPlugin implements Plugin<Project> {
     private void configureAgentDependencies(JacocoAgentJar jacocoAgentJar, final JacocoPluginExtension extension) {
         final Configuration config = project.getConfigurations().getAt(AGENT_CONFIGURATION_NAME);
         jacocoAgentJar.setAgentConf(config);
-        config.defaultDependencies(dependencies -> dependencies.add(project.getDependencies().create("org.jacoco:org.jacoco.agent:" + extension.getToolVersion())));
+        config.defaultDependencies(dependencies -> dependencies.add(project.getDependencies().create("org.jacoco:org.jacoco.agent:" + extension.getToolVersion() + ":runtime")));
     }
 
     /**

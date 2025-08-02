@@ -119,7 +119,7 @@ public abstract class JacocoPluginExtension {
         extension.setDestinationFile(layout.getBuildDirectory().file("jacoco/" + taskName + ".exec").map(RegularFile::getAsFile));
 
         task.getJvmArgumentProviders().add(new JacocoAgent(extension));
-        task.doFirst(new JacocoPrepareTestTaskAction(extension, agent, objects, fs));
+        task.doFirst(new JacocoPrepareTestTaskAction(extension, fs));
 
         // Do not cache the task if we are not writing execution data to a file
         Provider<Boolean> doNotCachePredicate = providers.provider(() ->
@@ -139,15 +139,10 @@ public abstract class JacocoPluginExtension {
      */
     private static class JacocoPrepareTestTaskAction implements Action<Task> {
         private final JacocoTaskExtension extension;
-        private final JacocoAgentJar agent;
-        private final ObjectFactory objects;
         private final FileSystemOperations fs;
 
-        private JacocoPrepareTestTaskAction(JacocoTaskExtension extension, JacocoAgentJar agent,
-                                            ObjectFactory objects, FileSystemOperations fs) {
+        private JacocoPrepareTestTaskAction(JacocoTaskExtension extension, FileSystemOperations fs) {
             this.extension = extension;
-            this.agent = agent;
-            this.objects = objects;
             this.fs = fs;
         }
 
@@ -169,7 +164,7 @@ public abstract class JacocoPluginExtension {
             }
 
             if (extension.getOffline().get()) {
-                FileCollection offlineClasspath = objects.fileCollection().from(agent.getJar()).plus(extension.getOfflineInstrumentedClasses());
+                FileCollection offlineClasspath = extension.getAgentClasspath().plus(extension.getOfflineInstrumentedClasses());
 
                 if (task instanceof Test) {
                     Test test = (Test) task;
