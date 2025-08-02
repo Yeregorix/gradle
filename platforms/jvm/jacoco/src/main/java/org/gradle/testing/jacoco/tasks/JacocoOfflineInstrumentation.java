@@ -21,7 +21,6 @@ import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.internal.file.FileOperations;
-import org.gradle.api.internal.project.IsolatedAntBuilder;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.IgnoreEmptyDirectories;
 import org.gradle.api.tasks.InputFiles;
@@ -30,10 +29,11 @@ import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskAction;
-import org.gradle.internal.jacoco.AntJacocoInstrument;
+import org.gradle.internal.jacoco.JacocoInstrumentationAction;
+import org.gradle.workers.WorkQueue;
+import org.gradle.workers.WorkerExecutor;
 
 import javax.inject.Inject;
-import java.io.File;
 
 /**
  * Task for applying Jacoco offline instrumentation to a collection of classes.
@@ -82,7 +82,7 @@ public abstract class JacocoOfflineInstrumentation extends JacocoBase {
     public abstract DirectoryProperty getOutputDir();
 
     @Inject
-    protected abstract IsolatedAntBuilder getAntBuilder();
+    protected abstract WorkerExecutor getWorkerExecutor();
 
     @Inject
     protected abstract FileOperations getFileOperations();
@@ -97,10 +97,11 @@ public abstract class JacocoOfflineInstrumentation extends JacocoBase {
         Directory outputDir = getOutputDir().get();
         getFileOperations().delete(outputDir);
 
-        new AntJacocoInstrument(getAntBuilder()).execute(
-            getJacocoClasspath(),
-            getInputClassDirs().filter(File::exists),
-            outputDir
-        );
+        WorkQueue queue = getWorkerExecutor().classLoaderIsolation();
+        queue.submit(JacocoInstrumentationAction.class, parameters -> {
+            parameters.getAntLibraryClasspath().convention(getJacocoClasspath());
+            parameters.getInputClassesDirs().convention(getInputClassDirs());
+            parameters.getOutputDir().convention(getOutputDir());
+        });
     }
 }

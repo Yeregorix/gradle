@@ -18,43 +18,36 @@ package org.gradle.internal.jacoco;
 
 import com.google.common.collect.ImmutableMap;
 import groovy.lang.Closure;
-import groovy.lang.GroovyObjectSupport;
-import org.gradle.api.file.Directory;
-import org.gradle.api.file.FileCollection;
-import org.gradle.api.internal.project.IsolatedAntBuilder;
+import org.gradle.api.Action;
+import org.gradle.api.internal.project.antbuilder.AntBuilderDelegate;
 
+import java.io.File;
 import java.util.Map;
 
 /**
  * Runs Jacoco offline instrumentation task using Ant.
  */
-public class AntJacocoInstrument {
-    private final IsolatedAntBuilder ant;
+public class AntJacocoInstrument implements Action<AntBuilderDelegate> {
+    private final JacocoInstrumentationParameters params;
 
-    public AntJacocoInstrument(IsolatedAntBuilder ant) {
-        this.ant = ant;
+    public AntJacocoInstrument(JacocoInstrumentationParameters params) {
+        this.params = params;
     }
 
-    public void execute(final FileCollection classpath, final FileCollection inputClassesDirs, final Directory outputDir) {
-        ant.withClasspath(classpath).execute(new Closure<Object>(this, this) {
-            @SuppressWarnings({"UnusedDeclaration"})
-            public Object doCall(Object it) {
-                GroovyObjectSupport antBuilder = (GroovyObjectSupport) it;
-                antBuilder.invokeMethod("taskdef", ImmutableMap.of(
-                        "name", "jacocoInstrument",
-                        "classname", "org.jacoco.ant.InstrumentTask"
-                ));
+    @Override
+    public void execute(AntBuilderDelegate antBuilder) {
+        antBuilder.invokeMethod("taskdef", ImmutableMap.of(
+            "name", "jacocoInstrument",
+            "classname", "org.jacoco.ant.InstrumentTask"
+        ));
 
-                final Map<String, Object> instrumentArgs = ImmutableMap.of("destdir", outputDir.getAsFile());
-                antBuilder.invokeMethod("jacocoInstrument", new Object[]{instrumentArgs, new Closure<Object>(this, this) {
-                    @SuppressWarnings("UnusedDeclaration")
-                    public Object doCall(Object ignore) {
-                        inputClassesDirs.getAsFileTree().addToAntBuilder(antBuilder, "resources");
-                        return null;
-                    }
-                }});
+        final Map<String, Object> instrumentArgs = ImmutableMap.of("destdir", params.getOutputDir().get().getAsFile());
+        antBuilder.invokeMethod("jacocoInstrument", new Object[]{instrumentArgs, new Closure<Object>(this, this) {
+            @SuppressWarnings("UnusedDeclaration")
+            public Object doCall(Object ignore) {
+                params.getInputClassesDirs().filter(File::exists).getAsFileTree().addToAntBuilder(antBuilder, "resources");
                 return null;
             }
-        });
+        }});
     }
 }
