@@ -47,11 +47,13 @@ class JavaProjectUnderTest {
         this
     }
 
-    JavaProjectUnderTest writeOfflineInstrumentation(boolean enabled, String task = "test") {
+    JavaProjectUnderTest writeOfflineInstrumentation(boolean enabled, String[] sourceSets = ["main"]) {
         buildFile << """
-            ${task} {
+            test {
+                classpath = files(jacoco.agentClasspath, ${sourceSets.collect {"sourceSets.${it}.jacoco.instrumentedClasses" }.join(", ")}, classpath)
+
                 jacoco {
-                    offline.set(${enabled})
+                    offline = ${enabled}
                 }
             }
         """

@@ -19,7 +19,6 @@ package org.gradle.testing.jacoco.plugins;
 import com.google.common.base.Joiner;
 import com.google.common.collect.ImmutableList;
 import org.gradle.api.Incubating;
-import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.provider.Providers;
@@ -27,19 +26,16 @@ import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Classpath;
-import org.gradle.api.tasks.IgnoreEmptyDirectories;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.LocalState;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.PathSensitive;
-import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.internal.deprecation.DeprecationLogger;
 import org.gradle.internal.instrumentation.api.annotations.ToBeReplacedByLazyProperty;
 import org.gradle.internal.jacoco.JacocoAgentJar;
 import org.gradle.process.JavaForkOptions;
+import org.gradle.testing.jacoco.tasks.JacocoOfflineInstrumentation;
 import org.gradle.util.internal.RelativePathUtil;
 
 import javax.annotation.Nullable;
@@ -79,7 +75,6 @@ public abstract class JacocoTaskExtension {
 
     private boolean enabled = true;
     private final Property<Boolean> offline;
-    private final ConfigurableFileCollection offlineInstrumentedClasses;
     private final RegularFileProperty destinationFile;
     private List<String> includes = new ArrayList<>();
     private List<String> excludes = new ArrayList<>();
@@ -105,7 +100,6 @@ public abstract class JacocoTaskExtension {
         this.agent = agent;
         this.task = task;
         offline = objects.property(Boolean.class).convention(false);
-        offlineInstrumentedClasses = objects.fileCollection();
         destinationFile = objects.fileProperty();
     }
 
@@ -124,6 +118,9 @@ public abstract class JacocoTaskExtension {
 
     /**
      * Whether offline instrumentation will be used. Defaults to {@code false}.
+     * For offline instrumentation to work properly, you must set a classpath containing
+     * the Jacoco agent via {@link JacocoTaskExtension#getAgentClasspath()}
+     * and instrumented classes from {@link JacocoSourceSetExtension}s or {@link JacocoOfflineInstrumentation} tasks.
      *
      * @since 8.14.3
      */
@@ -131,19 +128,6 @@ public abstract class JacocoTaskExtension {
     @Input
     public Property<Boolean> getOffline() {
         return offline;
-    }
-
-    /**
-     * The collection of offline instrumented classes that will be added to the test runtime classpath.
-     *
-     * @since 8.14.3
-     */
-    @Incubating
-    @IgnoreEmptyDirectories
-    @PathSensitive(PathSensitivity.RELATIVE)
-    @InputFiles
-    public ConfigurableFileCollection getOfflineInstrumentedClasses() {
-        return offlineInstrumentedClasses;
     }
 
     /**

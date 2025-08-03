@@ -21,7 +21,6 @@ import org.gradle.api.Named;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.DirectoryProperty;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.FileSystemOperations;
 import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.file.RegularFile;
@@ -35,11 +34,9 @@ import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskCollection;
-import org.gradle.api.tasks.testing.Test;
 import org.gradle.internal.instrumentation.api.annotations.ToBeReplacedByLazyProperty;
 import org.gradle.internal.jacoco.JacocoAgentJar;
 import org.gradle.process.CommandLineArgumentProvider;
-import org.gradle.process.JavaExecSpec;
 import org.gradle.process.JavaForkOptions;
 
 import javax.annotation.Nullable;
@@ -161,18 +158,6 @@ public abstract class JacocoPluginExtension {
                     throw new GradleException("JaCoCo destination file must not be null if output type is FILE");
                 }
                 fs.delete(spec -> spec.delete(coverageFile));
-            }
-
-            if (extension.getOffline().get()) {
-                FileCollection offlineClasspath = extension.getAgentClasspath().plus(extension.getOfflineInstrumentedClasses());
-
-                if (task instanceof Test) {
-                    Test test = (Test) task;
-                    test.setClasspath(offlineClasspath.plus(test.getClasspath()));
-                } else if (task instanceof JavaExecSpec) {
-                    JavaExecSpec exec = (JavaExecSpec) task;
-                    exec.setClasspath(offlineClasspath.plus(exec.getClasspath()));
-                }
             }
         }
     }

@@ -26,29 +26,12 @@ class JacocoOfflineInstrumentationIntegrationTest extends JacocoMultiVersionInte
         javaProjectUnderTest.writeSourceFiles()
     }
 
-    def "task jacocoTestOfflineInstrumentation is not executed when jacoco is disabled"() {
-        given:
-        buildFile << """
-            test {
-                jacoco {
-                    enabled = false
-                }
-            }
-        """
-
+    def "task jacocoMainInstrumentedClasses is not executed by default"() {
         when:
         succeeds('test')
 
         then:
-        notExecuted(':jacocoTestOfflineInstrumentation')
-    }
-
-    def "task jacocoTestOfflineInstrumentation is not executed by default"() {
-        when:
-        succeeds('test')
-
-        then:
-        skipped(':jacocoTestOfflineInstrumentation')
+        notExecuted(':jacocoMainInstrumentedClasses')
     }
 
     def "instrumented classes are generated when offline instrumentation is enabled"() {
@@ -59,9 +42,9 @@ class JacocoOfflineInstrumentationIntegrationTest extends JacocoMultiVersionInte
         succeeds('test')
 
         then:
-        executedAndNotSkipped(':jacocoTestOfflineInstrumentation')
+        executedAndNotSkipped(':jacocoMainInstrumentedClasses')
         file("build/jacoco/test.exec").assertIsFile()
-        file("build/jacoco/instrumented-classes/test").assertContainsDescendants("org/gradle/Class1.class")
+        file("build/jacoco/instrumented-classes/main").assertContainsDescendants("org/gradle/Class1.class")
     }
 
     def "offline instrumentation with multiple sourceSets"() {
@@ -72,33 +55,20 @@ class JacocoOfflineInstrumentationIntegrationTest extends JacocoMultiVersionInte
                 }
             }
 
-            jacocoTestOfflineInstrumentation {
-                sourceSets sourceSets.extra
+            dependencies {
+                testImplementation sourceSets.extra.output
             }
         """
-        javaProjectUnderTest.writeOfflineInstrumentation(true)
+        javaProjectUnderTest.writeOfflineInstrumentation(true, "main", "extra")
         javaProjectUnderTest.writeSourceFiles(1, "extra", "Extra")
 
         when:
-        succeeds('jacocoTestOfflineInstrumentation')
+        succeeds('test')
 
         then:
-        file("build/jacoco/instrumented-classes/test").assertContainsDescendants("org/gradle/Class1.class", "org/gradle/Class1Extra.class")
-    }
-
-    def "offline instrumentation with a different output dir"() {
-        given:
-        buildFile << """
-            jacocoTestOfflineInstrumentation {
-                outputDir.set(file('build/jacoco/custom-dir'))
-            }
-        """
-        javaProjectUnderTest.writeOfflineInstrumentation(true)
-
-        when:
-        succeeds('jacocoTestOfflineInstrumentation')
-
-        then:
-        file("build/jacoco/custom-dir").assertContainsDescendants("org/gradle/Class1.class")
+        executedAndNotSkipped(':jacocoMainInstrumentedClasses', ':jacocoExtraInstrumentedClasses')
+        file("build/jacoco/test.exec").assertIsFile()
+        file("build/jacoco/instrumented-classes/main").assertContainsDescendants("org/gradle/Class1.class")
+        file("build/jacoco/instrumented-classes/extra").assertContainsDescendants("org/gradle/Class1Extra.class")
     }
 }

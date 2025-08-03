@@ -102,13 +102,13 @@ class JacocoPluginSpec extends AbstractProjectBuilderSpec {
         expect:
         def jacocoTestReportTask = project.tasks.getByName('jacocoTestReport')
         def jacocoTestCoverageVerificationTask = project.tasks.getByName('jacocoTestCoverageVerification')
-        def jacocoTestOfflineInstrumentationTask = project.tasks.getByName('jacocoTestOfflineInstrumentation')
+        def jacocoMainInstrumentedClassesTask = project.tasks.getByName('jacocoMainInstrumentedClasses')
         jacocoTestReportTask.group == LifecycleBasePlugin.VERIFICATION_GROUP
         jacocoTestCoverageVerificationTask.group == LifecycleBasePlugin.VERIFICATION_GROUP
-        jacocoTestOfflineInstrumentationTask.group == LifecycleBasePlugin.VERIFICATION_GROUP
+        jacocoMainInstrumentedClassesTask.group == LifecycleBasePlugin.VERIFICATION_GROUP
         jacocoTestReportTask.description == 'Generates code coverage report for the test task.'
         jacocoTestCoverageVerificationTask.description == 'Verifies code coverage metrics based on specified rules for the test task.'
-        jacocoTestOfflineInstrumentationTask.description == 'Generates offline instrumented classes for the test task.'
+        jacocoMainInstrumentedClassesTask.description == 'Generates offline instrumented classes for the main source set.'
     }
 
     def "declares task property values for sourceEncoding without default value"() {
